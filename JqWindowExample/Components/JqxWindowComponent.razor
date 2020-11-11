@@ -1,0 +1,75 @@
+﻿@inject IJSRuntime JavascriptRunTime
+
+@implements IDisposable
+<div>
+    <div id="@InstanceId">
+        <div><span style="float: left">@Title</span></div>
+        <div>
+            <button @onclick="Destroy">Destroy</button>
+            <div id="@(InstanceId + "_Content")">
+                @WindowContent
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    [Parameter] public string Title { get; set; } = "Generic Title";
+    [Parameter] public EventCallback<string> RemoveCallback { get; set; }
+    [Parameter] public string InstanceId { get; set; } = Guid.NewGuid().ToString();
+    [Parameter] public RenderFragment WindowContent { get; set; }
+
+    public JqxWindowJsInterop JqxWindowJsInterop { get; set; }
+
+    public bool JsIsInitialized = false;
+    private bool firstRenderComplete;
+
+    #region LifeCycleOrder
+    //THIS PREVENTS THE COMPONENT FROM RENDERING MORE THAN ONCE.  GOOD FOR Javascript Interop
+    protected override bool ShouldRender()
+    {
+        return false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            firstRenderComplete = true;
+            JqxWindowJsInterop = new JqxWindowJsInterop(JavascriptRunTime, InstanceId);
+            JqxWindowJsInterop.JqxWindowInitialized += HandleInitialized;
+            await JqxWindowJsInterop.Initialize();
+        }
+    }
+    //LAST
+    public void Dispose()
+    {
+        if (firstRenderComplete == true)
+        {
+            JqxWindowJsInterop.Dispose();
+        }
+    }
+    #endregion
+
+    async void Destroy()
+    {
+        await RemoveCallback.InvokeAsync(InstanceId);
+    }
+
+    async void Close()
+    {
+        await JqxWindowJsInterop.Close();
+    }
+
+    async void Open()
+    {
+        await JqxWindowJsInterop.Open();
+    }
+
+    async void HandleInitialized(object sender, EventArgs e)
+    {
+        JsIsInitialized = true;
+    }
+}

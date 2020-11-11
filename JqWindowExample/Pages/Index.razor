@@ -1,0 +1,31 @@
+﻿@page "/"
+@using JqWindowExample.Components;
+
+<button @onclick="CreateWindow">Create Window</button>
+
+@foreach (string windowId in WindowIds)
+{
+    <JqxWindowComponent Title="@windowId" InstanceId="@windowId" RemoveCallback="@DestroyWindow">
+        <WindowContent>
+            <span>@windowId</span>
+        </WindowContent>
+    </JqxWindowComponent>
+}
+
+
+
+@code{
+    List<string> WindowIds { get; set; } = new List<string>();
+
+
+    void CreateWindow()
+    {
+        WindowIds.Add(Guid.NewGuid().ToString());
+    }
+
+    void DestroyWindow(string windowId)
+    {
+        WindowIds.Remove(windowId);
+    }
+
+}
